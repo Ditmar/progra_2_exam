@@ -4,7 +4,7 @@
 | **Tipo** | Feature / Story |
 | **Componente** | `presentation.dashboard`, `data.repository`, `domain.usecase` |
 | **Prioridad** | Alta |
-| **Estimación** | 5-8 días |
+| **Estimación** | 4 - 5 días |
 | **Reporter** | Docente - Programación 2 |
 | **Etiquetas** | `poo`, `interfaces`, `mvp`, `clean-architecture`, `evaluacion` |
 
