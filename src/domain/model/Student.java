@@ -1,0 +1,56 @@
+package domain.model;
+
+public class Student {
+    private String lastname;
+    private int id;
+    private String name;
+    private String ci;
+    private int grade;
+
+    public Student(int id, String lastname, String name, String ci, int grade) {
+        this.id = id;
+        this.lastname = lastname;
+        this.name = name;
+        this.ci = ci;
+        this.grade = grade;
+    }
+
+    public int getId() {
+        return id;
+    }
+    public void setId(int id){
+        this.id = id;
+    }
+    public String getLastname() {
+        return lastname;
+    }
+
+    public void setLastname(String lastname) {
+        this.lastname = lastname;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getCi() {
+        return ci;
+    }
+
+    public void setCi(String ci) {
+        this.ci = ci;
+    }
+
+    public int getGrade() {
+        return grade;
+    }
+
+    public void setGrade(int grade) {
+        this.grade = grade;
+    }
+
+}
