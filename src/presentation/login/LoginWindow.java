@@ -7,6 +7,7 @@ import java.awt.Label;
 import presentation.components.Image;
 import presentation.components.TextField;
 import presentation.dashboard.DashboardWindow;
+import presentation.dashboard.HandlerDashboardWindow;
 
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
@@ -30,14 +31,16 @@ public class LoginWindow extends JFrame implements LoginViewContract {
     private String title;
     private JPanel leftPanel, rightPanel;
     private LoginPresenterContract presenter;
+    private HandlerDashboardWindow handlerDashboardWindow;
     private TextField nameText;
     private TextField passwordText;
     private JComboBox<Role> comboBox;
     private JLabel errorLabel;
     private JButton enterButton;
 
-    public LoginWindow(LoginPresenterContract presenter) {
+    public LoginWindow(LoginPresenterContract presenter, HandlerDashboardWindow handlerDashboardWindow) {
         this.presenter = presenter;
+        this.handlerDashboardWindow = handlerDashboardWindow;
         build();
     }
 
@@ -192,8 +195,10 @@ public class LoginWindow extends JFrame implements LoginViewContract {
 
     @Override
     public void navigateToDashboard(User user) {
-        // JOptionPane.showMessageDialog(null, "Navegar al Dashboard!");
-        DashboardWindow dashboard = new DashboardWindow();
+        this.hideWindow();
+        DashboardWindow dashboard = new DashboardWindow(handlerDashboardWindow, user);
+        handlerDashboardWindow.attach(dashboard);
+        handlerDashboardWindow.onLoadStudents();
     }
 
     @Override
