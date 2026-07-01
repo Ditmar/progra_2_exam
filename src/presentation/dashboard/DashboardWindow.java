@@ -2,9 +2,9 @@ package presentation.dashboard;
 
 import java.awt.Color;
 import java.awt.Dimension;
-import java.util.ArrayList;
-
+import java.util.List;
 import javax.swing.JFrame;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
@@ -13,18 +13,19 @@ import javax.swing.table.DefaultTableModel;
 import domain.model.Student;
 import infrastructure.theme.AppColors;
 import infrastructure.theme.AppFonts;
+import presentation.dashboard.contract.DashboardViewContract;
 
-// TODO:
-// This code needs to be refactor 
-// using the pattern MVP
-
-public class DashboardWindow extends JFrame {
+public class DashboardWindow extends JFrame implements DashboardViewContract.View {
     private JPanel panel;
     private JTable table;
     private DefaultTableModel tableModel;
+    private final DashboardViewContract.Presenter presenter;
 
-    public DashboardWindow() {
+    // Inyección obligatoria del presentador por constructor
+    public DashboardWindow(DashboardViewContract.Presenter presenter) {
         super("Gestión de Estudiantes");
+        this.presenter = presenter;
+        this.presenter.attachView(this);
         build();
     }
 
@@ -33,9 +34,13 @@ public class DashboardWindow extends JFrame {
         this.setSize(1200, 800);
         this.setLocationRelativeTo(this);
         this.setLayout(null);
-        setVisible(true);
+        
         buildContainers();
         buildTable();
+        
+        // Carga inicial controlada por el presentador delegando el flujo de datos
+        this.presenter.requestStudentsLoad();
+        setVisible(true);
     }
 
     private void buildContainers() {
@@ -44,36 +49,10 @@ public class DashboardWindow extends JFrame {
         panel.setLocation(100, 70);
         panel.setBackground(AppColors.background);
         this.add(panel);
-
-    }
-
-    private ArrayList<Student> getData() {
-        ArrayList<Student> listOfStudents = new ArrayList<>();
-        listOfStudents.add(new Student("Alvarez", "Diego", "543210", "22"));
-        listOfStudents.add(new Student("Torres", "Lucia", "987654", "30"));
-        listOfStudents.add(new Student("Ramirez", "Carlos", "135791", "45"));
-        listOfStudents.add(new Student("Flores", "Gabriela", "246810", "18"));
-        listOfStudents.add(new Student("Diaz", "Fernando", "112233", "27"));
-        listOfStudents.add(new Student("Vargas", "Valeria", "445566", "35"));
-        listOfStudents.add(new Student("Castillo", "Alejandro", "778899", "51"));
-        listOfStudents.add(new Student("Morales", "Daniela", "990011", "23"));
-        listOfStudents.add(new Student("Herrera", "Javier", "223344", "40"));
-        listOfStudents.add(new Student("Castro", "Camila", "556677", "26"));
-        listOfStudents.add(new Student("Medina", "Ricardo", "889900", "48"));
-        listOfStudents.add(new Student("Aguilar", "Victoria", "121314", "33"));
-        listOfStudents.add(new Student("Suarez", "Sebastian", "151617", "20"));
-        listOfStudents.add(new Student("Salazar", "Natalia", "181920", "29"));
-        listOfStudents.add(new Student("Delgado", "Juan", "212223", "55"));
-        listOfStudents.add(new Student("Rios", "Valentina", "242526", "41"));
-        listOfStudents.add(new Student("Mendoza", "Gabriel", "272829", "19"));
-        listOfStudents.add(new Student("Ortega", "Isabella", "303132", "37"));
-        listOfStudents.add(new Student("Rojas", "Nicolas", "333435", "62"));
-        listOfStudents.add(new Student("Guerrero", "Paulina", "363738", "25"));
-        return listOfStudents;
     }
 
     private void buildTable() {
-        tableModel = new DefaultTableModel(new String[] { "Apellidos", "Nombres", "CI", "Nota" }, 0) {
+        tableModel = new DefaultTableModel(new String[] { "ID", "Apellidos", "Nombres", "CI", "Nota" }, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
                 return false;
@@ -87,24 +66,47 @@ public class DashboardWindow extends JFrame {
         table.setGridColor(Color.LIGHT_GRAY);
         table.setShowGrid(true);
         table.setSize(new Dimension(1000, 500));
-        loadData();
+
         JScrollPane scrollpane = new JScrollPane(table);
         scrollpane.setBounds(0, 0, 1000, 600);
         panel.add(scrollpane);
-
     }
 
-    private void loadData() {
-        ArrayList<Student> listStudents = getData();
+    // --- Implementación de los contratos de la Vista MVP ---
+
+    @Override
+    public void showStudentsList(List<Student> students) {
         tableModel.setRowCount(0);
-        for (Student s : listStudents) {
+        for (Student s : students) {
             tableModel.addRow(new Object[] {
-                    s.getLastname(),
-                    s.getName(),
-                    s.getCi(),
-                    s.getGrade()
+                s.getId(), // Agregado en el modelado
+                s.getLastname(),
+                s.getName(),
+                s.getCi(),
+                s.getGrade()
             });
         }
         table.clearSelection();
+    }
+
+    @Override
+    public void displayErrorMessage(String message) {
+        JOptionPane.showMessageDialog(this, message, "Error de Operación", JOptionPane.ERROR_MESSAGE);
+    }
+
+    @Override
+    public void displaySuccessMessage(String message) {
+        JOptionPane.showMessageDialog(this, message, "Éxito", JOptionPane.INFORMATION_MESSAGE);
+    }
+
+    @Override
+    public void clearInputFields() {
+        // Si tuvieras TextFields añadidos (como txtName), aquí harías un .setText("");
+    }
+
+    @Override
+    public void restrictEditingPrivileges() {
+        // Criterio de Aceptación 5: Si no es admin, deshabilitar o esconder componentes de edición
+        // Ejemplo: btnGuardar.setEnabled(false);
     }
 }

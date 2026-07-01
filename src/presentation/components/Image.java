@@ -28,10 +28,10 @@ public class Image extends JLabel {
         this.setIcon(icon);
     }
 
-    @Override
+   @Override
     public void setSize(Dimension d) {
         setImageSize(d);
-        super.resize(d);
+        super.setSize(d);
     }
 
     private void setImage() {
