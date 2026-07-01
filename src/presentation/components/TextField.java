@@ -40,4 +40,12 @@ public class TextField extends JTextField implements FocusListener {
             this.setText(placeHolder);
         }
     }
+
+    public String getValue() {
+        String text = this.getText();
+        if (text.equals(placeHolder)) {
+            return "";
+        }
+        return text.trim();
+    }
 }
