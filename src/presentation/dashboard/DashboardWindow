@@ -1,0 +1,8 @@
+// Cambia el método de permisos dentro de tu clase DashboardWindow por este:
+private void applySecurityPermissions(String role) {
+    // Se resuelve el control de accesos por Rol de forma polimórfica mediante la fábrica de estrategias
+    presentation.dashboard.security.PermissionStrategy strategy = 
+            presentation.dashboard.security.PermissionFactory.getStrategy(role);
+            
+    strategy.configureUI(btnSave, btnDelete, txtName, txtCi, txtGrade);
+}
