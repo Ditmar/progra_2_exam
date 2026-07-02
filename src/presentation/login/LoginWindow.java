@@ -2,11 +2,11 @@ package presentation.login;
 
 import java.awt.Color;
 import java.awt.Dimension;
-import java.awt.Label;
 
 import presentation.components.Image;
 import presentation.components.TextField;
 import presentation.dashboard.DashboardWindow;
+import presentation.dashboard.HandlerDashboardWindow;
 
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
@@ -14,17 +14,20 @@ import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
-import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.SwingConstants;
+import javax.swing.SwingUtilities;
 
+import data.repository.MockStudentRepository;
+import domain.model.Role;
 import domain.model.User;
+import domain.repository.StudentRepository;
+import domain.usecase.StudentUseCase;
 import presentation.login.contract.LoginPresenterContract;
 import presentation.login.contract.LoginViewContract;
 import infrastructure.theme.AppColors;
 import infrastructure.theme.AppCursors;
 import infrastructure.theme.AppFonts;
-import domain.model.Role;
 
 public class LoginWindow extends JFrame implements LoginViewContract {
     private String title;
@@ -53,15 +56,6 @@ public class LoginWindow extends JFrame implements LoginViewContract {
         this.setComboBox();
         this.setButton();
         this.setCheckBox();
-        this.setImages();
-    }
-
-    private void setImages() {
-        Image image = new Image("/Users/ditmar/progra2.2026/lesson4/example1/resources/images/AhaConvert_homer.jpg");
-        image.setSize(new Dimension(300, 300));
-        image.setLocation((leftPanel.getWidth() - image.getWidth()) / 2, 200);
-        leftPanel.add(image);
-
     }
 
     private void setCheckBox() {
@@ -94,7 +88,6 @@ public class LoginWindow extends JFrame implements LoginViewContract {
                 e -> presenter.onLoginClicked(this.nameText.getText(), this.passwordText.getText(),
                         (Role) this.comboBox.getSelectedItem()));
         rightPanel.add(enterButton);
-
     }
 
     private void setComboBox() {
@@ -170,10 +163,6 @@ public class LoginWindow extends JFrame implements LoginViewContract {
         this.setVisible(false);
     }
 
-    public String getTitle() {
-        return this.title;
-    }
-
     @Override
     public void showError(String message) {
         errorLabel.setText(message);
@@ -190,10 +179,18 @@ public class LoginWindow extends JFrame implements LoginViewContract {
         }
     }
 
+    
     @Override
     public void navigateToDashboard(User user) {
-        // JOptionPane.showMessageDialog(null, "Navegar al Dashboard!");
-        DashboardWindow dashboard = new DashboardWindow();
+        this.setVisible(false);
+        SwingUtilities.invokeLater(() -> {
+            
+            StudentRepository studentRepository = new MockStudentRepository();
+            StudentUseCase studentUseCase = new StudentUseCase(studentRepository);
+            HandlerDashboardWindow handlerDashboard = new HandlerDashboardWindow(studentUseCase);
+            DashboardWindow dashboard = new DashboardWindow(handlerDashboard, user.getRole());
+            handlerDashboard.attach(dashboard);
+        });
     }
 
     @Override

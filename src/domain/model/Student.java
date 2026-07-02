@@ -1,16 +1,33 @@
 package domain.model;
 
 public class Student {
+    private int id;
     private String lastname;
     private String name;
     private String ci;
     private String grade;
 
+    private static int nextId = 1;
+
     public Student(String lastname, String name, String ci, String grade) {
+        this.id = nextId++;
         this.lastname = lastname;
         this.name = name;
         this.ci = ci;
         this.grade = grade;
+    }
+
+  
+    public Student(int id, String lastname, String name, String ci, String grade) {
+        this.id = id;
+        this.lastname = lastname;
+        this.name = name;
+        this.ci = ci;
+        this.grade = grade;
+    }
+
+    public int getId() {
+        return id;
     }
 
     public String getLastname() {
@@ -44,5 +61,4 @@ public class Student {
     public void setGrade(String grade) {
         this.grade = grade;
     }
-
 }
