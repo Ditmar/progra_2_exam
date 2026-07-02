@@ -5,9 +5,6 @@ import java.awt.FontFormatException;
 import java.awt.GraphicsEnvironment;
 import java.io.IOException;
 import java.io.InputStream;
-
-//TODO: verify the loader of fonts
-
 public final class ResourceLoader {
     private ResourceLoader() {
     }
