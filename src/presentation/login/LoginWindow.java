@@ -3,6 +3,7 @@ package presentation.login;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Label;
+import java.util.function.Consumer;
 
 import presentation.components.Image;
 import presentation.components.TextField;
@@ -190,10 +191,18 @@ public class LoginWindow extends JFrame implements LoginViewContract {
         }
     }
 
+    private Consumer<User> onLoginSuccess;
+
+    public void setOnLoginSuccess(Consumer<User> callback) {
+        this.onLoginSuccess = callback;
+    }
+
     @Override
     public void navigateToDashboard(User user) {
-        // JOptionPane.showMessageDialog(null, "Navegar al Dashboard!");
-        DashboardWindow dashboard = new DashboardWindow();
+        if (onLoginSuccess != null) {
+            onLoginSuccess.accept(user);
+        }
+        this.setVisible(false);
     }
 
     @Override

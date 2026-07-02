@@ -1,110 +1,408 @@
 package presentation.dashboard;
 
-import java.awt.Color;
-import java.awt.Dimension;
-import java.util.ArrayList;
-
-import javax.swing.JFrame;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JTable;
-import javax.swing.table.DefaultTableModel;
-
 import domain.model.Student;
 import infrastructure.theme.AppColors;
+import infrastructure.theme.AppCursors;
 import infrastructure.theme.AppFonts;
+import presentation.components.TextField;
+import presentation.dashboard.contract.DashboardPresenterContract;
+import presentation.dashboard.contract.DashboardViewContract;
 
-// TODO:
-// This code needs to be refactor 
-// using the pattern MVP
+import javax.swing.*;
+import javax.swing.border.Border;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
+import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableRowSorter;
+import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.util.List;
 
-public class DashboardWindow extends JFrame {
-    private JPanel panel;
+public class DashboardWindow extends JFrame implements DashboardViewContract {
+    private DashboardPresenterContract presenter;
+
+    private JSplitPane splitPane;
+    private JPanel leftPanel;
+    private JPanel rightPanel;
+
     private JTable table;
     private DefaultTableModel tableModel;
+    private TableRowSorter<DefaultTableModel> sorter;
+    private JTextField searchField;
 
-    public DashboardWindow() {
-        super("Gestión de Estudiantes");
+    private TextField lastNameField;
+    private TextField nameField;
+    private TextField ciField;
+    private TextField gradeField;
+
+    private JButton createButton;
+    private JButton updateButton;
+    private JButton deleteButton;
+    private JButton clearButton;
+    private JButton newButton;
+
+    private JLabel statusLabel;
+
+    private Border defaultBorder;
+    private Border errorBorder = BorderFactory.createLineBorder(Color.RED, 2);
+    private Border okBorder = BorderFactory.createLineBorder(Color.GREEN, 2);
+
+    public DashboardWindow(DashboardPresenterContract presenter) {
+        super("Gestión de Estudiantes - Panel Dividido");
+        this.presenter = presenter;
         build();
+        if (presenter instanceof HandlerDashboardWindow) {
+            ((HandlerDashboardWindow) presenter).attach(this);
+        }
+        setVisible(true);
     }
 
     private void build() {
-        this.setDefaultCloseOperation(EXIT_ON_CLOSE);
-        this.setSize(1200, 800);
-        this.setLocationRelativeTo(this);
-        this.setLayout(null);
-        setVisible(true);
-        buildContainers();
-        buildTable();
+        setDefaultCloseOperation(EXIT_ON_CLOSE);
+        setSize(1200, 750);
+        setLocationRelativeTo(null);
+        setLayout(new BorderLayout());
+
+        splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
+        splitPane.setDividerLocation(650);
+        splitPane.setResizeWeight(0.6);
+
+        buildLeftPanel();
+        buildRightPanel();
+
+        splitPane.setLeftComponent(leftPanel);
+        splitPane.setRightComponent(rightPanel);
+        add(splitPane, BorderLayout.CENTER);
+
+        statusLabel = new JLabel("Listo");
+        statusLabel.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
+        add(statusLabel, BorderLayout.SOUTH);
+
+        rightPanel.setVisible(false);
     }
 
-    private void buildContainers() {
-        panel = new JPanel(null);
-        panel.setSize(1000, 730);
-        panel.setLocation(100, 70);
-        panel.setBackground(AppColors.background);
-        this.add(panel);
+    private void buildLeftPanel() {
+        leftPanel = new JPanel(new BorderLayout());
+        leftPanel.setBackground(AppColors.background);
 
-    }
+        JPanel searchPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        searchPanel.add(new JLabel("Buscar:"));
+        searchField = new JTextField(20);
+        searchField.getDocument().addDocumentListener(new DocumentListener() {
+            @Override public void insertUpdate(DocumentEvent e) { filter(); }
+            @Override public void removeUpdate(DocumentEvent e) { filter(); }
+            @Override public void changedUpdate(DocumentEvent e) { filter(); }
+        });
+        searchPanel.add(searchField);
 
-    private ArrayList<Student> getData() {
-        ArrayList<Student> listOfStudents = new ArrayList<>();
-        listOfStudents.add(new Student("Alvarez", "Diego", "543210", "22"));
-        listOfStudents.add(new Student("Torres", "Lucia", "987654", "30"));
-        listOfStudents.add(new Student("Ramirez", "Carlos", "135791", "45"));
-        listOfStudents.add(new Student("Flores", "Gabriela", "246810", "18"));
-        listOfStudents.add(new Student("Diaz", "Fernando", "112233", "27"));
-        listOfStudents.add(new Student("Vargas", "Valeria", "445566", "35"));
-        listOfStudents.add(new Student("Castillo", "Alejandro", "778899", "51"));
-        listOfStudents.add(new Student("Morales", "Daniela", "990011", "23"));
-        listOfStudents.add(new Student("Herrera", "Javier", "223344", "40"));
-        listOfStudents.add(new Student("Castro", "Camila", "556677", "26"));
-        listOfStudents.add(new Student("Medina", "Ricardo", "889900", "48"));
-        listOfStudents.add(new Student("Aguilar", "Victoria", "121314", "33"));
-        listOfStudents.add(new Student("Suarez", "Sebastian", "151617", "20"));
-        listOfStudents.add(new Student("Salazar", "Natalia", "181920", "29"));
-        listOfStudents.add(new Student("Delgado", "Juan", "212223", "55"));
-        listOfStudents.add(new Student("Rios", "Valentina", "242526", "41"));
-        listOfStudents.add(new Student("Mendoza", "Gabriel", "272829", "19"));
-        listOfStudents.add(new Student("Ortega", "Isabella", "303132", "37"));
-        listOfStudents.add(new Student("Rojas", "Nicolas", "333435", "62"));
-        listOfStudents.add(new Student("Guerrero", "Paulina", "363738", "25"));
-        return listOfStudents;
-    }
+        newButton = new JButton("Nuevo Estudiante");
+        newButton.setBackground(AppColors.primary);
+        newButton.setForeground(Color.WHITE);
+        newButton.setCursor(AppCursors.HAND);
+        newButton.addActionListener(e -> presenter.showNewForm());
+        searchPanel.add(newButton);
 
-    private void buildTable() {
-        tableModel = new DefaultTableModel(new String[] { "Apellidos", "Nombres", "CI", "Nota" }, 0) {
-            @Override
-            public boolean isCellEditable(int row, int column) {
-                return false;
-            }
+        leftPanel.add(searchPanel, BorderLayout.NORTH);
+
+        tableModel = new DefaultTableModel(new String[]{"ID", "Apellidos", "Nombres", "CI", "Nota"}, 0) {
+            @Override public boolean isCellEditable(int row, int col) { return false; }
         };
-
         table = new JTable(tableModel);
-        table.setRowHeight(35);
+        table.setRowHeight(30);
         table.setFont(AppFonts.TITLE_H1);
-        table.setBackground(AppColors.secondary);
-        table.setGridColor(Color.LIGHT_GRAY);
-        table.setShowGrid(true);
-        table.setSize(new Dimension(1000, 500));
-        loadData();
-        JScrollPane scrollpane = new JScrollPane(table);
-        scrollpane.setBounds(0, 0, 1000, 600);
-        panel.add(scrollpane);
+        table.getTableHeader().setReorderingAllowed(false);
 
+        sorter = new TableRowSorter<>(tableModel);
+        table.setRowSorter(sorter);
+
+        table.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                int row = table.getSelectedRow();
+                if (row >= 0) {
+                    int modelRow = table.convertRowIndexToModel(row);
+                    int id = (int) tableModel.getValueAt(modelRow, 0);
+                    String lastname = (String) tableModel.getValueAt(modelRow, 1);
+                    String name = (String) tableModel.getValueAt(modelRow, 2);
+                    String ci = (String) tableModel.getValueAt(modelRow, 3);
+                    String grade = (String) tableModel.getValueAt(modelRow, 4);
+                    Student selected = new Student(id, lastname, name, ci, grade);
+                    presenter.onStudentSelected(selected);
+                }
+            }
+        });
+
+        JScrollPane scroll = new JScrollPane(table);
+        leftPanel.add(scroll, BorderLayout.CENTER);
     }
 
-    private void loadData() {
-        ArrayList<Student> listStudents = getData();
+    private void buildRightPanel() {
+        rightPanel = new JPanel(new GridBagLayout());
+        rightPanel.setBackground(AppColors.secondary);
+        rightPanel.setBorder(BorderFactory.createTitledBorder("Datos del Estudiante"));
+
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(5, 5, 5, 5);
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.anchor = GridBagConstraints.CENTER;
+
+        int y = 0;
+        gbc.gridx = 0; gbc.gridy = y;
+        rightPanel.add(new JLabel("Apellido:"), gbc);
+        gbc.gridx = 1;
+        lastNameField = new TextField("Apellido");
+        lastNameField.setPreferredSize(new Dimension(200, 30));
+        addValidation(lastNameField);
+        rightPanel.add(lastNameField, gbc);
+
+        y++;
+        gbc.gridx = 0; gbc.gridy = y;
+        rightPanel.add(new JLabel("Nombre:"), gbc);
+        gbc.gridx = 1;
+        nameField = new TextField("Nombre");
+        addValidation(nameField);
+        rightPanel.add(nameField, gbc);
+
+        y++;
+        gbc.gridx = 0; gbc.gridy = y;
+        rightPanel.add(new JLabel("CI:"), gbc);
+        gbc.gridx = 1;
+        ciField = new TextField("CI");
+        addValidation(ciField);
+        rightPanel.add(ciField, gbc);
+
+        y++;
+        gbc.gridx = 0; gbc.gridy = y;
+        rightPanel.add(new JLabel("Nota:"), gbc);
+        gbc.gridx = 1;
+        gradeField = new TextField("Nota");
+        addValidation(gradeField);
+        rightPanel.add(gradeField, gbc);
+
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 10));
+        createButton = new JButton("Crear");
+        createButton.setBackground(AppColors.primary);
+        createButton.setForeground(Color.WHITE);
+        createButton.setCursor(AppCursors.HAND);
+        createButton.addActionListener(e -> onCreate());
+
+        updateButton = new JButton("Actualizar");
+        updateButton.setBackground(AppColors.primary);
+        updateButton.setForeground(Color.WHITE);
+        updateButton.setCursor(AppCursors.HAND);
+        updateButton.addActionListener(e -> onUpdate());
+
+        deleteButton = new JButton("Eliminar");
+        deleteButton.setBackground(Color.RED);
+        deleteButton.setForeground(Color.WHITE);
+        deleteButton.setCursor(AppCursors.HAND);
+        deleteButton.addActionListener(e -> onDelete());
+
+        clearButton = new JButton("Limpiar");
+        clearButton.setCursor(AppCursors.HAND);
+        clearButton.addActionListener(e -> presenter.clearForm());
+
+        buttonPanel.add(createButton);
+        buttonPanel.add(updateButton);
+        buttonPanel.add(deleteButton);
+        buttonPanel.add(clearButton);
+
+        y++;
+        gbc.gridx = 0; gbc.gridy = y;
+        gbc.gridwidth = 2;
+        rightPanel.add(buttonPanel, gbc);
+    }
+
+    private void addValidation(JTextField field) {
+        defaultBorder = field.getBorder();
+        field.getDocument().addDocumentListener(new DocumentListener() {
+            @Override public void insertUpdate(DocumentEvent e) { validateField(field); }
+            @Override public void removeUpdate(DocumentEvent e) { validateField(field); }
+            @Override public void changedUpdate(DocumentEvent e) { validateField(field); }
+        });
+    }
+
+    private void validateField(JTextField field) {
+        String text = field.getText().trim();
+        if (field == ciField) {
+            if (!text.matches("\\d*")) {
+                field.setBorder(errorBorder);
+            } else {
+                field.setBorder(okBorder);
+            }
+        } else if (field == gradeField) {
+            try {
+                if (!text.isEmpty()) {
+                    double val = Double.parseDouble(text);
+                    if (val < 0 || val > 100) field.setBorder(errorBorder);
+                    else field.setBorder(okBorder);
+                } else {
+                    field.setBorder(defaultBorder);
+                }
+            } catch (NumberFormatException e) {
+                field.setBorder(errorBorder);
+            }
+        } else {
+            if (text.isEmpty() || text.equals("Apellido") || text.equals("Nombre") ||
+                text.equals("CI") || text.equals("Nota")) {
+                field.setBorder(errorBorder);
+            } else {
+                field.setBorder(okBorder);
+            }
+        }
+    }
+
+    private void filter() {
+        String query = searchField.getText().toLowerCase().trim();
+        if (query.isEmpty()) {
+            sorter.setRowFilter(null);
+        } else {
+            sorter.setRowFilter(RowFilter.regexFilter("(?i)" + query, 1, 2)); // busca en apellido (col 1) y nombre (col 2)
+        }
+    }
+
+    private void onCreate() {
+        try {
+            Student student = extractStudentFromForm(false);
+            presenter.createStudent(student);
+        } catch (IllegalArgumentException e) {
+            showError(e.getMessage());
+        }
+    }
+
+    private void onUpdate() {
+        try {
+            Student student = extractStudentFromForm(true);
+            presenter.updateStudent(student);
+        } catch (IllegalArgumentException e) {
+            showError(e.getMessage());
+        }
+    }
+
+    private void onDelete() {
+        int row = table.getSelectedRow();
+        if (row < 0) {
+            showError("Seleccione un estudiante en la tabla");
+            return;
+        }
+        int modelRow = table.convertRowIndexToModel(row);
+        int id = (int) tableModel.getValueAt(modelRow, 0);
+        int confirm = JOptionPane.showConfirmDialog(this,
+                "¿Eliminar estudiante con ID " + id + "?", "Confirmar",
+                JOptionPane.YES_NO_OPTION);
+        if (confirm == JOptionPane.YES_OPTION) {
+            presenter.deleteStudent(id);
+        }
+    }
+
+    private Student extractStudentFromForm(boolean withId) {
+        String lastname = lastNameField.getText();
+        String name = nameField.getText();
+        String ci = ciField.getText();
+        String grade = gradeField.getText();
+
+        if (lastname.equals("Apellido") || lastname.isBlank())
+            throw new IllegalArgumentException("Apellido obligatorio");
+        if (name.equals("Nombre") || name.isBlank())
+            throw new IllegalArgumentException("Nombre obligatorio");
+        if (ci.equals("CI") || ci.isBlank())
+            throw new IllegalArgumentException("CI obligatorio");
+        if (grade.equals("Nota") || grade.isBlank())
+            throw new IllegalArgumentException("Nota obligatoria");
+
+        if (withId) {
+            int row = table.getSelectedRow();
+            if (row < 0) throw new IllegalArgumentException("Seleccione un estudiante");
+            int modelRow = table.convertRowIndexToModel(row);
+            int id = (int) tableModel.getValueAt(modelRow, 0);
+            return new Student(id, lastname, name, ci, grade);
+        } else {
+            return new Student(lastname, name, ci, grade);
+        }
+    }
+
+    @Override
+    public void showStudents(List<Student> students) {
         tableModel.setRowCount(0);
-        for (Student s : listStudents) {
-            tableModel.addRow(new Object[] {
-                    s.getLastname(),
-                    s.getName(),
-                    s.getCi(),
-                    s.getGrade()
-            });
+        for (Student s : students) {
+            tableModel.addRow(new Object[]{s.getId(), s.getLastname(), s.getName(), s.getCi(), s.getGrade()});
         }
         table.clearSelection();
+        filter();
+    }
+
+    @Override
+    public void showError(String message) {
+        statusLabel.setText("ERROR: " + message);
+        statusLabel.setForeground(Color.RED);
+        JOptionPane.showMessageDialog(this, message, "Error", JOptionPane.ERROR_MESSAGE);
+    }
+
+    @Override
+    public void clearError() {
+        statusLabel.setText("Listo");
+        statusLabel.setForeground(Color.BLACK);
+    }
+
+    @Override
+    public void showSuccess(String message) {
+        statusLabel.setText("Éxito: " + message);
+        statusLabel.setForeground(Color.GREEN);
+        JOptionPane.showMessageDialog(this, message, "Éxito", JOptionPane.INFORMATION_MESSAGE);
+    }
+
+    @Override
+    public void setLoading(boolean loading) {
+        setCursor(loading ? AppCursors.WAIT : Cursor.getDefaultCursor());
+        createButton.setEnabled(!loading);
+        updateButton.setEnabled(!loading);
+        deleteButton.setEnabled(!loading);
+        newButton.setEnabled(!loading);
+    }
+
+    @Override
+    public void setPermissions(boolean canCreate, boolean canEdit, boolean canDelete) {
+        createButton.setEnabled(canCreate);
+        updateButton.setEnabled(canEdit);
+        deleteButton.setEnabled(canDelete);
+        newButton.setEnabled(canCreate);
+    }
+
+    @Override
+    public void setFormData(Student student) {
+        lastNameField.setText(student.getLastname());
+        nameField.setText(student.getName());
+        ciField.setText(student.getCi());
+        gradeField.setText(student.getGrade());
+        rightPanel.setVisible(true);
+        splitPane.setDividerLocation(0.6);
+        lastNameField.setBorder(okBorder);
+        nameField.setBorder(okBorder);
+        ciField.setBorder(okBorder);
+        gradeField.setBorder(okBorder);
+    }
+
+    @Override
+    public void clearForm() {
+        lastNameField.setText("Apellido");
+        nameField.setText("Nombre");
+        ciField.setText("CI");
+        gradeField.setText("Nota");
+        lastNameField.setBorder(defaultBorder);
+        nameField.setBorder(defaultBorder);
+        ciField.setBorder(defaultBorder);
+        gradeField.setBorder(defaultBorder);
+        table.clearSelection();
+        statusLabel.setText("Formulario limpiado");
+        rightPanel.setVisible(false);
+    }
+
+    @Override
+    public void showForm(boolean show) {
+        rightPanel.setVisible(show);
+        if (show) {
+            splitPane.setDividerLocation(0.6);
+        }
     }
 }
